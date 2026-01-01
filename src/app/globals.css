@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Mode Default */
+  --background: #ffffff;
+  --foreground: #020617;
+  --primary: #06b6d4; /* Cyan 500 */
+  --secondary: #10b981; /* Emerald 500 */
+}
+
+/* Dark Mode (Class Strategy or Media) - We will prioritize manually checking "dark" class support later, 
+   but for now we use prefers-color-scheme media query as base for defaults, 
+   and ideally valid CSS variable overrides for .dark class. */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617; /* Slate 950 */
+    --foreground: #f8fafc; /* Slate 50 */
+  }
+}
+
+/* Manual Dark Mode Override */
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
