@@ -13,10 +13,12 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
+    "merkletreejs": "^0.6.0",
     "next": "16.1.1",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "snarkjs": "^0.7.5",
     "tailwind-merge": "^3.4.0",
     "viem": "^2.43.3",
     "wagmi": "^3.1.3"

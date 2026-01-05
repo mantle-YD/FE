@@ -7,13 +7,39 @@ import { Calculator, Lock, CheckCircle, Loader2, ArrowRight, Shield } from 'luci
 export function IssuerForm() {
     const [step, setStep] = useState('input') // input, generating, generated, submittting, submitted
     const [formData, setFormData] = useState({ revenue: '', expenses: '', date: '' })
+    const [result, setResult] = useState(null)
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         setStep('generating')
         // Simulate heavy ZK computation
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/issuer/generate-yield', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    revenue: Number(formData.revenue),
+                    expenses: Number(formData.expenses),
+                    date: formData.date,
+                }),
+            })
+            console.log('STATUS:', res.status)
+            console.log('RAW RESPONSE:', res)
+
+            if (!res.ok) throw new Error('API error')
+
+            const data = await res.json()
+            // data.yieldUsd, data.merkleRoot, dll
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+            console.log('DATA FROM API:', data)
+            setResult(data)
             setStep('generated')
-        }, 3000)
+
+            //console.log('DATA FROM API:', data)
+        } catch (e) {
+            console.error(e)
+            alert('Gagal generate proof')
+            setStep('input')
+        }
     }
 
     const handleSubmit = () => {
@@ -24,8 +50,8 @@ export function IssuerForm() {
         }, 2000)
     }
 
-    const yieldAmount = formData.revenue && formData.expenses ? (parseInt(formData.revenue) - parseInt(formData.expenses)) : 0
-
+    //const yieldAmount = formData.revenue && formData.expenses ? (parseInt(formData.revenue) - parseInt(formData.expenses)) : 0
+    const yieldAmount = result?.yieldUsd || 0
     return (
         <div className="w-full max-w-2xl mx-auto p-6">
             <AnimatePresence mode="wait">
@@ -142,7 +168,7 @@ export function IssuerForm() {
                             <div className="h-px bg-white/10 my-2" />
                             <div className="flex justify-between items-center text-xl">
                                 <span className="text-muted-foreground">Verified Yield</span>
-                                <span className="font-mono font-bold text-secondary">${yieldAmount.toLocaleString()}</span>
+                                <span className="font-mono font-bold text-secondary">${yieldAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
 
