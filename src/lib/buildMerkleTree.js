@@ -25,7 +25,7 @@ export function buildMerkleTreeByPercentage(investorsWithBalance, totalYieldCent
     let accumulatedYield = 0n
 
     investorsWithBalance.forEach((investor, index) => {
-        // Hitung porsi yield berdasarkan persentase
+        // Hitung porsi yield berdasarkan
         const yieldForInvestor = BigInt(
             Math.floor(
                 (Number(totalYieldCents) * investor.percentageOwnership) / 100,

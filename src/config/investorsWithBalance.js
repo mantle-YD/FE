@@ -43,7 +43,7 @@ export const DEMO_INVESTORS_WITH_BALANCE = [
         percentageOwnership: 10.5,
     },
     {
-        address: '0x9999999999999999999999999999999999999999',
+        address: '0x0b1D01A4341F03Df15446118727C615027765F29',
         retTokenBalance: 180000,
         percentageOwnership: 18,
     },

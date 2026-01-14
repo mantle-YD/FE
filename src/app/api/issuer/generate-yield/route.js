@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import { generateYieldProof } from '@/lib/generateYieldProof'
 import { buildMerkleTreeByPercentage } from '@/lib/buildMerkleTree'
-import { DEMO_INVESTORS_WITH_BALANCE } from '@/config/investorsWithBalance'
+import { getUsers } from '@/lib/userData'
 
 export async function POST(request) {
   try {
@@ -23,14 +23,16 @@ export async function POST(request) {
     const yieldCents = revenueCents - expensesCents
     const yieldUsd = yieldCents / 100
 
+    const users = getUsers()
+
     console.log(
       'Building Merkle tree for',
-      DEMO_INVESTORS_WITH_BALANCE.length,
+      users.length,
       'investors with percentage-based allocation',
     )
 
     const { root, investorCount, proofMap } = buildMerkleTreeByPercentage(
-      DEMO_INVESTORS_WITH_BALANCE,
+      users,
       yieldCents,
     )
 

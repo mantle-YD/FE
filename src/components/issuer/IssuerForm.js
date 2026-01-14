@@ -47,6 +47,21 @@ export function IssuerForm() {
         // Simulate blockchain transaction
         setTimeout(() => {
             setStep('submitted')
+
+            // Save Yield Data for Investor Portal
+            const revenue = Number(formData.revenue)
+            const expenses = Number(formData.expenses)
+            const totalPool = revenue - expenses
+
+            const yieldData = {
+                totalPool: totalPool,
+                distributionDate: formData.date, // YYYY-MM-DD
+                timestamp: Date.now()
+            }
+
+            localStorage.setItem('MA_YP_YIELD_DATA', JSON.stringify(yieldData))
+            console.log('✅ Yield Data Saved:', yieldData)
+
         }, 2000)
     }
 

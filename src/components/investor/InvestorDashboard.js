@@ -1,18 +1,71 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Wallet, Coins, CheckCircle2, Circle, Loader2, ArrowRight } from 'lucide-react'
-import { useAccount } from 'wagmi'
+import { useAccount, useReadContract } from 'wagmi'
+import { formatEther } from 'viem'
+import { CONTRACTS } from '@/config/contracts'
+import RealEstateTokenABI from '@/abi/RealEstateToken.json'
 
 export function InvestorDashboard() {
     const { address, isConnected } = useAccount()
     const [claimStatus, setClaimStatus] = useState('idle') // idle, verifying, claiming, claimed
+    const [yieldData, setYieldData] = useState({ totalPool: 0, distributionDate: 'Pending' })
+    const [userUsd, setUserUsd] = useState(0)
+    const [isClient, setIsClient] = useState(false)
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
+
     const [verificationSteps, setVerificationSteps] = useState({
         accredited: false,
         jurisdiction: false,
         kyc: false
     })
+
+    useEffect(() => {
+        // Load stored yield data
+        const storedYield = localStorage.getItem('MA_YP_YIELD_DATA')
+        if (storedYield) {
+            setYieldData(JSON.parse(storedYield))
+        }
+
+        // Load stored USD balance
+        const storedUsd = localStorage.getItem('MA_YP_USER_USD')
+        if (storedUsd) {
+            setUserUsd(Number(storedUsd))
+        }
+    }, [])
+
+    // Get RET Balance
+    const { data: balance, error: balanceError, isLoading: isBalanceLoading } = useReadContract({
+        address: CONTRACTS.realEstateToken.address,
+        abi: RealEstateTokenABI,
+        functionName: 'balanceOf',
+        args: address ? [address] : undefined,
+        chainId: CONTRACTS.realEstateToken.chainId,
+        query: {
+            enabled: !!address,
+            refetchInterval: 5000,
+        },
+    });
+
+    useEffect(() => {
+        if (balanceError) {
+            console.error("❌ InvestorDashboard Balance Error:", balanceError);
+        }
+        if (balance !== undefined) {
+            console.log("💰 InvestorDashboard Balance:", formatEther(balance));
+        }
+    }, [balance, balanceError]);
+
+    // Calculate user's share
+    // Logic: (RET Balance / 1,000,000) * Total Pool
+    const totalSupply = 1000000
+    const retBalance = balance ? Number(formatEther(balance)) : 0
+    const yourShare = (retBalance / totalSupply) * yieldData.totalPool
+    const formattedShare = yourShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     const handleClaim = () => {
         setClaimStatus('verifying')
@@ -26,6 +79,8 @@ export function InvestorDashboard() {
             setClaimStatus('claiming')
             setTimeout(() => {
                 setClaimStatus('claimed')
+                setUserUsd(yourShare)
+                localStorage.setItem('MA_YP_USER_USD', yourShare.toString())
             }, 2500)
         }, 4000)
     }
@@ -44,13 +99,29 @@ export function InvestorDashboard() {
                     </div>
                 </div>
                 {isConnected && (
-                    <div className="flex items-center gap-6 mt-6 md:mt-0 w-full md:w-auto justify-end border-t md:border-t-0 border-white/10 pt-6 md:pt-0">
+                    <div className="flex items-center gap-20 mt-6 md:mt-0 w-full md:w-auto justify-end border-t md:border-t-0 border-white/10 pt-6 md:pt-0">
+                        <div className="text-right">
+                            <h2 className="text-sm text-muted-foreground uppercase tracking-wider">Your USD</h2>
+                            <p className="text-2xl font-bold text-white flex items-center justify-end gap-2">
+                                {userUsd.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-sm font-normal text-muted-foreground">USD</span>
+                            </p>
+                        </div>
+
                         <div className="text-right">
                             <h2 className="text-sm text-muted-foreground uppercase tracking-wider">Your Holdings</h2>
                             <p className="text-2xl font-bold text-white flex items-center justify-end gap-2">
-                                5,000 <span className="text-sm font-normal text-muted-foreground">RET</span>
+                                {isBalanceLoading ? (
+                                    <Loader2 className="animate-spin h-5 w-5" />
+                                ) : (
+                                    balance ? Number(formatEther(balance)).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'
+                                )}
+                                <span className="text-sm font-normal text-muted-foreground">RET</span>
                             </p>
+                            {balanceError && (
+                                <p className="text-xs text-red-400 text-right mt-1">Failed to load balance</p>
+                            )}
                         </div>
+
                     </div>
                 )}
             </div>
@@ -66,16 +137,16 @@ export function InvestorDashboard() {
                         <div className="space-y-6">
                             <div className="flex justify-between items-center p-4 bg-black/20 rounded-xl">
                                 <span className="text-muted-foreground">Total Pool</span>
-                                <span className="font-mono font-bold text-lg">$50,000</span>
+                                <span className="font-mono font-bold text-lg">${yieldData.totalPool.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center p-4 bg-black/20 rounded-xl">
                                 <span className="text-muted-foreground">Distribution Date</span>
-                                <span className="font-mono text-sm text-primary">Dec 26, 2025</span>
+                                <span className="font-mono text-sm text-primary">{yieldData.distributionDate}</span>
                             </div>
                             <div className="mt-8 pt-8 border-t border-white/10">
                                 <div className="flex justify-between items-end">
                                     <span className="text-lg text-muted-foreground mb-1">Your Share</span>
-                                    <span className="text-4xl font-bold text-secondary text-shadow-glow">$250.00</span>
+                                    <span className="text-4xl font-bold text-secondary text-shadow-glow">${formattedShare}</span>
                                 </div>
                             </div>
                         </div>
@@ -110,7 +181,7 @@ export function InvestorDashboard() {
                             className="mt-8 p-6 bg-primary/10 rounded-xl border border-primary/20 flex flex-col items-center gap-3 text-center"
                         >
                             <Loader2 className="animate-spin text-primary w-8 h-8" />
-                            <span className="font-medium">Transferring $250 to your wallet...</span>
+                            <span className="font-medium">Transferring ${userUsd.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} to your wallet...</span>
                         </motion.div>
                     )}
 
@@ -121,7 +192,7 @@ export function InvestorDashboard() {
                             className="mt-8 p-6 bg-secondary/10 rounded-xl border border-secondary/20 flex flex-col items-center gap-3 text-secondary text-center"
                         >
                             <CheckCircle2 className="w-10 h-10" />
-                            <span className="font-bold text-xl">$250 Transferred!</span>
+                            <span className="font-bold text-xl">${userUsd.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} Transferred!</span>
                             <span className="text-sm opacity-80">Transaction Hash: 0x7f...3a9</span>
                         </motion.div>
                     )}
