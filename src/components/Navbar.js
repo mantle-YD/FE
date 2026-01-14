@@ -23,8 +23,9 @@ export function Navbar() {
                         <div className="hidden md:block">
                             <div className="ml-10 flex items-baseline space-x-4">
                                 <Link href="/" className="hover:text-primary transition px-3 py-2 rounded-md text-sm font-medium">Home</Link>
-                                <Link href="#" className="hover:text-primary transition px-3 py-2 rounded-md text-sm font-medium">Docs</Link>
+                                
 
+                                
                                 <div className="relative group/dropdown">
                                     <button
                                         className="flex items-center gap-1 hover:text-primary transition px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
